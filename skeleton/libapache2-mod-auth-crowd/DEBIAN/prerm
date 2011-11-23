@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cp /etc/apache2/httpd.conf /tmp/httpd.conf.bak
+/usr/sbin/a2dismod authnz_crowd
+/usr/sbin/apache2ctl configtest || mv /tmp/httpd.conf.bak /etc/apache2/httpd.conf
+/usr/sbin/apache2ctl graceful

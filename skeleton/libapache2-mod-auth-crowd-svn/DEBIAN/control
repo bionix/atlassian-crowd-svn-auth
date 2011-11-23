@@ -1,0 +1,9 @@
+Package: libapache2-mod-auth-crowd-svn
+Version: VERSION 
+Section: web
+Maintainer: Jan Schumann <j.schumann@searchmetrics.com>
+Architecture: amd64
+Depends: apache2, libapache2-svn, libapache2-mod-auth-crowd
+Description: Module for Apache2 which provides Atlassian Crowd authorisation for SVN
+ mod_auth_crowd implements authorisation rules for SVN using Atlassian Crowd as authentication backend. 
+ 

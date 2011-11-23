@@ -1,0 +1,10 @@
+#!/bin/bash
+
+cp /etc/apache2/http.conf /tmp/httpd.conf.bak
+/usr/sbin/a2enmod authnz_crowd
+/usr/sbin/a2enmod dav_svn
+/usr/sbin/a2enmod authz_svn_crowd 
+if [ -e /etc/apache2/mods-enabled/dav.load ]; then mv /etc/apache2/mods-enabled/dav.load /etc/apache2/mods-enabled/1dav.load; fi
+if [ -e /etc/apache2/mods-enabled/dav_svn.load ]; then mv /etc/apache2/mods-enabled/dav_svn.load /etc/apache2/mods-enabled/1dav_svn.load; fi
+/usr/sbin/apache2ctl configtest || mv /tmp/httpd.conf.bak /etc/apache2/httpd.conf
+/usr/sbin/apache2ctl graceful
