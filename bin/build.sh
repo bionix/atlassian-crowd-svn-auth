@@ -2,8 +2,15 @@
 
 set -e
 
+if [[ $UID -ne 0 ]]; then
+    echo "$0 must be run as root"
+    exit 1
+fi
+
+
+
 # install some needed packages
-sudo aptitude -y install autoconf libtool apache2-threaded-dev libsvn-dev libcurl4-gnutls-dev libxml2-dev
+apt-get -y install autoconf git-core libtool apache2-threaded-dev libsvn-dev build-essential devscripts libcurl4-gnutls-dev libxml2-dev
 
 # prepare working dir
 case "$0" in
@@ -13,58 +20,54 @@ case "$0" in
   * ) echo "Unkown Error"; exit 1 ;;
 esac
 
-WORKING_DIR=${SCRIPT_DIR%/*}/../src
+ROOT_DIR="$PWD"
+
+cd ../src
+WORKING_DIR="$PWD"
 
 if [ ! -d $WORKING_DIR ]; then
   mkdir $WORKING_DIR
 fi
 
+git clone https://bitbucket.org/atlassian/cwdapache.git $WORKING_DIR
+
 cd $WORKING_DIR
+echo "WORKING_DIR :  $WORKING_DIR"
 
-# determine lates version
-SVN_BASE="https://studio.plugins.atlassian.com/svn/CWDAPACHE/tags/"
-VERSION=$(svn list $SVN_BASE | tail -1)
-# remove trailing slash
-VERSION=${VERSION%/*}
+GITTAG_VERSION=`(git tag | sort -n | tail -1)`
 
-
-if [ -d "$VERSION" ]; then
-  # version exists - clean up
-  cd $VERSION
-  make clean
-else
-  # download and configure new version
-  svn export "$SVN_BASE$VERSION" $VERSION
-  cd $VERSION
-  autoreconf --install 
+aclocal
+libtoolize
+autoreconf --install
   ./configure
-fi
- 
 # finally make
 make
+cd $ROOT_DIR ; cd .. ;
 
 # prepare packages
-WORKING_DIR=$WORKING_DIR/../packages
+WORKING_DIR=$PWD/packages
 if [ -d $WORKING_DIR ]; then
-  sudo rm -Rf $WORKING_DIR
-fi 
+  rm -Rf $WORKING_DIR
+fi
 mkdir $WORKING_DIR
 cd $WORKING_DIR
 
 cp -R ../skeleton/libapache2-mod-auth-crowd .
 cp -R ../skeleton/libapache2-mod-auth-crowd-svn .
-sed -i "s/VERSION/$VERSION/" libapache2-mod-auth-crowd/DEBIAN/control
-sed -i "s/VERSION/$VERSION/" libapache2-mod-auth-crowd-svn/DEBIAN/control
+sed -i "s/VERSION/$GITTAG_VERSION/" libapache2-mod-auth-crowd/DEBIAN/control
+sed -i "s/VERSION/$GITTAG_VERSION/" libapache2-mod-auth-crowd-svn/DEBIAN/control
 
-cp ../src/$VERSION/src/.libs/mod_authnz_crowd.so libapache2-mod-auth-crowd/usr/lib/apache2/modules
-cp ../src/$VERSION/src/svn/.libs/mod_authz_svn_crowd.so libapache2-mod-auth-crowd-svn/usr/lib/apache2/modules
+mkdir -p libapache2-mod-auth-crowd/usr/lib/apache2/modules
+cp ../src/src/.libs/mod_authnz_crowd.so libapache2-mod-auth-crowd/usr/lib/apache2/modules
+mkdir -p libapache2-mod-auth-crowd-svn/usr/lib/apache2/modules
+cp ../src/src/svn/.libs/mod_authz_svn_crowd.so libapache2-mod-auth-crowd-svn/usr/lib/apache2/modules
 
-sudo chown -R root:root *
-sudo chmod 0755 libapache2-mod-auth-crowd/DEBIAN/postinst
-sudo chmod 0755 libapache2-mod-auth-crowd/DEBIAN/prerm
-sudo chmod 0755 libapache2-mod-auth-crowd-svn/DEBIAN/postinst
-sudo chmod 0755 libapache2-mod-auth-crowd-svn/DEBIAN/prerm
+ chown -R root:root *
+ chmod 0755 libapache2-mod-auth-crowd/DEBIAN/postinst
+ chmod 0755 libapache2-mod-auth-crowd/DEBIAN/prerm
+ chmod 0755 libapache2-mod-auth-crowd-svn/DEBIAN/postinst
+ chmod 0755 libapache2-mod-auth-crowd-svn/DEBIAN/prerm
 
 # build the packages
-sudo dpkg -b libapache2-mod-auth-crowd libapache2-mod-auth-crowd-$VERSION-amd64.deb
-sudo dpkg -b libapache2-mod-auth-crowd-svn libapache2-mod-auth-crowd-svn-$VERSION-amd64.deb
+ dpkg -b libapache2-mod-auth-crowd libapache2-mod-auth-crowd-$GITTAG_VERSION-amd64.deb
+ dpkg -b libapache2-mod-auth-crowd-svn libapache2-mod-auth-crowd-svn-$GITTAG_VERSION-amd64.deb

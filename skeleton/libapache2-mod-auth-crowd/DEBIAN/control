@@ -1,10 +1,10 @@
 Package: libapache2-mod-auth-crowd
-Version: VERSION 
+Version: VERSION
 Section: web
 Maintainer: Jan Schumann <j.schumann@searchmetrics.com>
+Uploaders: Markus Rekkenbeil <bionix@grml.org>
 Architecture: amd64
 Depends: apache2
 Priority: optional
-Description: Module for Apache2 which provides Atlassian Crowd authentication
- mod_auth_crowd implements authentication routines using Atlassian Crowd. 
- 
+Description: Module for Apache2 which provides Atlassian Crowd authentication mod_auth_crowd implements authentication routines using Atlassian Crowd.
+
